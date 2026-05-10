@@ -40,10 +40,8 @@ class Retriever:
         corpus = []
 
         for i, seg in enumerate(segments):
-            # Get ALL messages for this segment (not just first 20)
-            messages = db.get_messages_by_global_range(seg.start_idx, seg.end_idx)
-            full_text = " ".join(m.text for m in messages)
-            doc_text = f"{seg.topic_label} {seg.summary} {full_text}"
+            # Using only summary and label to avoid N+1 query OOM for millions of messages
+            doc_text = f"{seg.topic_label} {seg.summary}"
 
             self._segment_ids.append(seg.id)
             self._segment_data.append({

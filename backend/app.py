@@ -24,12 +24,22 @@ def create_app():
     # Initialize database
     with app.app_context():
         db.init_db()
+        # Recover any stuck jobs from previous ungraceful shutdowns
+        conn = db._get_conn()
+        conn.execute("UPDATE processing_jobs SET status='error', error='Worker terminated unexpectedly before completion' WHERE status='processing'")
+        conn.commit()
+
         if not db.is_processed():
             from config import CSV_PATH
             from services.processor import start_processing
             if os.path.exists(CSV_PATH):
                 print("DB is empty. Auto-starting processing from CSV_PATH...")
-                start_processing(CSV_PATH)
+                try:
+                    start_processing(CSV_PATH)
+                except Exception as e:
+                    import traceback
+                    traceback.print_exc()
+                    print(f"Failed to auto-start processing: {e}")
 
     # Register API routes
     app.register_blueprint(api_bp)

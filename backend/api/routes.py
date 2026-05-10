@@ -72,26 +72,31 @@ def query():
 
     start = time.time()
 
-    # Retrieve relevant segments
-    segments = retriever.search(question)
+    try:
+        # Retrieve relevant segments
+        segments = retriever.search(question)
 
-    # Get persona if conversation specified
-    persona = None
-    if conversation_id is not None:
-        persona = db.get_persona(conversation_id)
-        if persona is None:
-            # Extract on demand
-            messages = db.get_messages_by_conversation(conversation_id)
-            if messages:
-                persona_obj = extract_persona_for_conversation(messages, conversation_id)
-                persona = persona_obj.to_dict()
-                db.save_persona(conversation_id, json.dumps(persona))
+        # Get persona if conversation specified
+        persona = None
+        if conversation_id is not None:
+            persona = db.get_persona(conversation_id)
+            if persona is None:
+                # Extract on demand
+                messages = db.get_messages_by_conversation(conversation_id)
+                if messages:
+                    persona_obj = extract_persona_for_conversation(messages, conversation_id)
+                    persona = persona_obj.to_dict()
+                    db.save_persona(conversation_id, json.dumps(persona))
 
-    # Synthesize answer
-    result = synthesize_answer(question, segments, persona)
-    result["query_time_ms"] = round((time.time() - start) * 1000, 1)
+        # Synthesize answer
+        result = synthesize_answer(question, segments, persona)
+        result["query_time_ms"] = round((time.time() - start) * 1000, 1)
 
-    return jsonify(result)
+        return jsonify(result)
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Processing failed: {str(e)}"}), 500
 
 
 @api_bp.route('/conversations', methods=['GET'])
@@ -99,7 +104,7 @@ def query():
 def get_conversations():
     """Get paginated list of conversations."""
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
     convos, total = db.get_conversations_paginated(page, per_page)
     return jsonify({
         "conversations": convos,
@@ -134,7 +139,7 @@ def get_persona_for_conversation(conv_id):
 def get_topics():
     """Get paginated topic segments."""
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
     conversation_id = request.args.get('conversation_id', None, type=int)
     segments, total = db.get_segments_paginated(page, per_page, conversation_id)
     return jsonify({
@@ -151,7 +156,7 @@ def get_topics():
 def get_checkpoints():
     """Get paginated time checkpoints."""
     page = request.args.get('page', 1, type=int)
-    per_page = request.args.get('per_page', 20, type=int)
+    per_page = min(request.args.get('per_page', 20, type=int), 100)
     cps, total = db.get_checkpoints_paginated(page, per_page)
     return jsonify({
         "checkpoints": cps,

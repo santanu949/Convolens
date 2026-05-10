@@ -28,6 +28,7 @@ ENV DATA_DIR=/app/data
 ENV DB_PATH=/app/data/convolens.db
 ENV UPLOAD_DIR=/app/data/uploads
 ENV PORT=5000
+ENV PYTHONPATH=/app/backend
 
 EXPOSE 5000
 

@@ -1,9 +1,10 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "data")
-CSV_PATH = os.path.join(DATA_DIR, "conversations.csv")
-DB_PATH  = os.path.join(DATA_DIR, "convolens.db")
+# Respect environment variables set by Docker/Render for persistent volumes
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(BASE_DIR, "data"))
+CSV_PATH = os.getenv("CSV_PATH", os.path.join(DATA_DIR, "conversations.csv"))
+DB_PATH  = os.getenv("DB_PATH", os.path.join(DATA_DIR, "convolens.db"))
 
 TOPIC_WINDOW_SIZE           = 3
 TOPIC_SIMILARITY_THRESHOLD  = 0.35
