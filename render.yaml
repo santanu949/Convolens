@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: convolens
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: PORT
+        value: 5000
+    disk:
+      name: convolens-data
+      mountPath: /app/data
+      sizeGB: 1
